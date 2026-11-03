@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+/deploy/
+/config.local.json
+secrets.yaml
+api-token
+device.json
+state.json
+*.pcap
+*.pcapng
+*.log
+*.key
+.env

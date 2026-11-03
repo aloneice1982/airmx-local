@@ -1,0 +1,18 @@
+{
+  "service_ip": "192.0.2.1",
+  "fan_ip": "192.0.2.20",
+  "sensor_ip": "192.0.2.21",
+  "ha_ip": "192.0.2.30",
+  "fan_mac": "02:00:00:00:00:20",
+  "device_id": 10001,
+  "cloud_ips": [
+    "198.51.100.20"
+  ],
+  "lan_bridge": "br-lan",
+  "nat_priority": -110,
+  "http_port": 25880,
+  "mqtt_port": 25884,
+  "admin_port": 25886,
+  "api_port": 25887,
+  "router_ssh": "root@192.0.2.1"
+}

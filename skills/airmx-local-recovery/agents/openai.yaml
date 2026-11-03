@@ -1,0 +1,4 @@
+interface:
+  display_name: "AIRMX 本地恢复与平稳智能"
+  short_description: "恢复 AIRMX 新风、本地接入 HA 并优化 CO₂ 趋势调速"
+  default_prompt: "使用 $airmx-local-recovery 在我的内网检查 AIRMX 新风机，按需恢复本地服务、接入 HA 并优化平稳智能。"

@@ -1,0 +1,236 @@
+rest:
+- resource: http://192.0.2.1:25887/api/status
+  scan_interval: 30
+  timeout: 12
+  headers:
+    Authorization: !secret 'airmx_local_api'
+  sensor:
+  - name: AIRMX 室内 CO2
+    unique_id: airmx_indoor_co2
+    device_class: carbon_dioxide
+    state_class: measurement
+    unit_of_measurement: ppm
+    value_template: "{{ value_json.sensor.data.sensorData[0].co2.value\n   if value_json.sensor\
+      \ and value_json.sensor.data.sensorData | length > 0\n   and value_json.sensor.data.sensorData[0].co2\
+      \ is defined else none }}"
+  - name: AIRMX 室内 PM2.5
+    unique_id: airmx_indoor_pm25
+    device_class: pm25
+    state_class: measurement
+    unit_of_measurement: µg/m³
+    value_template: "{{ value_json.sensor.data.sensorData[0].pm25.value\n   if value_json.sensor\
+      \ and value_json.sensor.data.sensorData | length > 0\n   and value_json.sensor.data.sensorData[0].pm25\
+      \ is defined else none }}"
+  - name: AIRMX 室内 PM10
+    unique_id: airmx_indoor_pm10
+    device_class: pm10
+    state_class: measurement
+    unit_of_measurement: µg/m³
+    value_template: "{{ value_json.sensor.data.sensorData[0].pm10.value\n   if value_json.sensor\
+      \ and value_json.sensor.data.sensorData | length > 0\n   and value_json.sensor.data.sensorData[0].pm10\
+      \ is defined else none }}"
+  - name: AIRMX 室内温度
+    unique_id: airmx_indoor_temperature
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: °C
+    value_template: "{{ value_json.sensor.data.sensorData[0].temperature.value\n \
+      \  if value_json.sensor and value_json.sensor.data.sensorData | length > 0\n\
+      \   and value_json.sensor.data.sensorData[0].temperature is defined else none\
+      \ }}"
+  - name: AIRMX 室内湿度
+    unique_id: airmx_indoor_humidity
+    device_class: humidity
+    state_class: measurement
+    unit_of_measurement: '%'
+    value_template: "{{ value_json.sensor.data.sensorData[0].humidity.value\n   if\
+      \ value_json.sensor and value_json.sensor.data.sensorData | length > 0\n   and\
+      \ value_json.sensor.data.sensorData[0].humidity is defined else none }}"
+  - name: AIRMX 新风风量
+    unique_id: airmx_fan_speed
+    state_class: measurement
+    unit_of_measurement: '%'
+    value_template: '{{ value_json.status.data.cadr if value_json.status else none
+      }}'
+  - name: AIRMX G4 滤芯已用
+    unique_id: airmx_g4_filter_used
+    unit_of_measurement: '%'
+    value_template: '{{ value_json.status.data.g4Percent if value_json.status else
+      none }}'
+  - name: AIRMX HEPA 滤芯已用
+    unique_id: airmx_hepa_filter_used
+    unit_of_measurement: '%'
+    value_template: '{{ value_json.status.data.hepaPercent if value_json.status else
+      none }}'
+  - name: AIRMX 活性炭滤芯已用
+    unique_id: airmx_carbon_filter_used
+    unit_of_measurement: '%'
+    value_template: '{{ value_json.status.data.carbonPercent if value_json.status
+      else none }}'
+  - name: AIRMX 实际运行模式
+    unique_id: airmx_actual_mode
+    value_template: '{{ {0:''手动'',1:''AI'',2:''静音'',3:''强力''}.get(value_json.status.data.mode,
+      ''未知'') if value_json.status else ''未知'' }}'
+rest_command:
+  airmx_set_speed:
+    url: http://192.0.2.1:25887/api/set-speed
+    method: post
+    headers:
+      Authorization: !secret 'airmx_local_api'
+    content_type: application/json
+    payload: '{"percent": {{ percent | int(-1) }} }'
+    timeout: 15
+  airmx_set_mode:
+    url: http://192.0.2.1:25887/api/set-mode
+    method: post
+    headers:
+      Authorization: !secret 'airmx_local_api'
+    content_type: application/json
+    payload: '{"mode": {{ mode | int(-1) }} }'
+    timeout: 15
+input_number:
+  airmx_desired_speed:
+    name: AIRMX 目标风量
+    min: 9
+    max: 100
+    step: 1
+    unit_of_measurement: '%'
+    mode: slider
+input_select:
+  airmx_mode:
+    name: AIRMX 运行模式
+    options:
+    - 手动
+    - AI
+    - 静音
+    - 强力
+    - HA平稳智能
+    - 观察学习
+script:
+  airmx_apply_desired_speed:
+    alias: AIRMX 应用目标风量
+    mode: single
+    sequence:
+    - choose:
+      - conditions: '{{ is_state(''input_select.airmx_mode'',''手动'') }}'
+        sequence:
+        - action: shell_command.airmx_smart_action
+          data:
+            action: manual
+          response_variable: result
+        - &id001
+          if: '{{ result.returncode != 0 }}'
+          then:
+          - action: persistent_notification.create
+            data:
+              notification_id: airmx_smart_error
+              title: AIRMX 控制需要检查
+              message: 本轮控制未完成，请查看 AIRMX Smart Controller 的原因及错误状态。
+      default:
+      - action: persistent_notification.create
+        data:
+          notification_id: airmx_manual_mode
+          title: AIRMX 手动风量
+          message: 请先把运行模式选择为手动，再应用手动风量。
+  airmx_apply_mode:
+    alias: AIRMX 应用运行模式
+    mode: queued
+    sequence:
+    - action: shell_command.airmx_smart_action
+      data:
+        action: '{{ ''start'' if states(''input_select.airmx_mode'') in [''HA平稳智能'',''观察学习'']
+          else ''native'' }}'
+      response_variable: result
+    - *id001
+    - action: homeassistant.update_entity
+      target:
+        entity_id: sensor.airmx_smart_controller
+automation:
+- id: airmx_speed_change_to_manual
+  alias: AIRMX 手动风量自动应用
+  description: 仅手动模式下修改目标风量才应用，不再因误触滑块退出AI
+  mode: restart
+  trigger:
+  - platform: state
+    entity_id: input_number.airmx_desired_speed
+  condition:
+  - condition: state
+    entity_id: input_select.airmx_mode
+    state: 手动
+  action:
+  - action: script.airmx_apply_desired_speed
+- id: airmx_mode_change_apply
+  alias: AIRMX 切换运行模式自动应用
+  description: 切换运行模式时自动下发到新风机
+  mode: restart
+  trigger:
+  - platform: state
+    entity_id: input_select.airmx_mode
+  condition:
+  - condition: template
+    value_template: '{{ trigger.from_state is not none and trigger.to_state is not
+      none and trigger.from_state.state not in [''unknown'',''unavailable''] and trigger.from_state.state
+      != trigger.to_state.state }}'
+  action:
+  - service: script.airmx_apply_mode
+- id: airmx_smart_controller_tick
+  alias: AIRMX 平稳智能采样调度
+  mode: single
+  trigger:
+  - platform: time_pattern
+    minutes: '*'
+    seconds: '15'
+  condition:
+  - condition: template
+    value_template: '{{ states(''input_select.airmx_mode'') in [''HA平稳智能'',''观察学习'']
+      }}'
+  action:
+  - action: shell_command.airmx_smart_action
+    data:
+      action: tick
+    response_variable: result
+  - *id001
+  - action: homeassistant.update_entity
+    target:
+      entity_id: sensor.airmx_smart_controller
+shell_command:
+  airmx_smart_action: python3 /config/airmx_smart/controller.py --action {{ action
+    if action is defined and action in ['tick','start','stop','native','manual'] else
+    'report' }} --mode {{ 'control' if is_state('input_select.airmx_mode','HA平稳智能')
+    else 'observe' }} --native-mode {{ {'手动':0,'AI':1,'静音':2,'强力':3}.get(states('input_select.airmx_mode'),-1)
+    }} --percent {{ states('input_number.airmx_desired_speed') | int(-1) }}
+command_line:
+- sensor:
+    name: AIRMX Smart Controller
+    unique_id: airmx_smart_controller
+    command: python3 /config/airmx_smart/controller.py --action report
+    scan_interval: 30
+    command_timeout: 10
+    value_template: '{{ value_json.state }}'
+    json_attributes:
+    - mode
+    - reason
+    - co2
+    - pm25
+    - slope
+    - predicted_co2
+    - suggested_speed
+    - base_speed
+    - trend_weight
+    - response_gain
+    - response_samples
+    - forecast_count
+    - sample_ts
+    - sample_interval_s
+    - sample_age_s
+    - actual_mode
+    - actual_speed
+    - actual_power
+    - last_action
+    - error
+    - updated_at
+    - acknowledged
+    - min_speed
+    - target_co2
+    - policy_version
+    - max_down_step

@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+START=98
+STOP=10
+
+start() {
+    /etc/airmx-recovery/apply-rules.sh
+}
+
+reload() {
+    start
+}
+
+stop() {
+    nft delete table ip airmx_recovery >/dev/null 2>&1 || true
+}

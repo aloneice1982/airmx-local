@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light">
+  <title>AIRMX Pro 本地配网</title>
+  <link rel="stylesheet" href="./app.css">
+  <script type="module" src="./main.mjs"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="brand">
+      <div class="mark" aria-hidden="true">A</div>
+      <div><p class="eyebrow">LOCAL DEVICE SETUP</p><h1>AIRMX Pro 配网</h1></div>
+    </header>
+
+    <section class="panel">
+      <div class="status-row">
+        <span id="readiness-dot" class="dot" aria-hidden="true"></span>
+        <div><p class="eyebrow">本地服务状态</p><p id="readiness" role="status" aria-live="polite">正在检查本地服务…</p></div>
+      </div>
+      <p class="small muted">只有本机服务确认注册端已就绪时，才能开始配网。此页面不会请求设备厂商服务器。</p>
+    </section>
+
+    <section class="panel" aria-labelledby="connection-title">
+      <div class="status-row">
+        <span id="connection-dot" class="dot" aria-hidden="true"></span>
+        <div><p class="eyebrow">设备网络状态</p><h2 id="connection-title">本地连接</h2></div>
+      </div>
+      <p id="connection-summary" class="connection-summary" role="status" aria-live="polite">正在读取设备连接状态…</p>
+      <p id="sensor-readings" class="small muted">等待检测仪读数…</p>
+      <p id="fan-readings" class="small muted"></p>
+    </section>
+
+    <section id="unsupported" class="panel warning" hidden>
+      <h2>此浏览器无法使用蓝牙</h2>
+      <p>请在桌面版 Chrome 或 Edge 中，通过 localhost 打开此页面，并允许浏览器使用蓝牙。</p>
+    </section>
+
+    <form id="credentials" class="panel" autocomplete="off">
+      <div class="step-title"><span>01</span><div><h2>输入 Wi‑Fi 信息</h2><p>信息只保留在当前页面内存中。</p></div></div>
+      <label for="ssid">Wi‑Fi 名称（SSID）</label>
+      <input id="ssid" name="wifi_ssid" type="text" maxlength="128" autocomplete="off" required>
+      <label for="password">Wi‑Fi 密码</label>
+      <input id="password" name="wifi_passphrase" type="password" maxlength="256" autocomplete="off" required>
+      <p class="small muted">设备可能仅支持 2.4 GHz Wi‑Fi。SSID 和密码按 UTF‑8 字节长度验证；不会保存、写入地址栏或输出到日志。</p>
+      <p id="input-error" class="error" role="alert" hidden></p>
+      <button id="continue" type="submit" disabled>继续</button>
+    </form>
+
+    <section id="activation" class="panel" hidden>
+      <div class="step-title"><span>02</span><div><h2>让设备进入配对模式</h2><p>这会更改设备的 Wi‑Fi 设置。</p></div></div>
+      <ol class="instructions">
+        <li>同时按住设备上的 <strong>AI</strong> 与 <strong>风量增加</strong> 按钮约 3 秒。</li>
+        <li>看到绿色蓝牙图标闪烁后松开按钮。</li>
+      </ol>
+      <p class="small warning-text">配网时设备会短暂断开网络并尝试连接新 Wi‑Fi。请确认本地服务已准备好接收设备注册。</p>
+      <button id="start" type="button">开始蓝牙配对</button>
+      <p id="bluetooth-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <section id="progress-panel" class="panel" hidden>
+      <div class="step-title"><span>03</span><div><h2>设备通信</h2><p id="phase" role="status" aria-live="polite">等待蓝牙设备选择…</p></div></div>
+      <ol id="progress" class="progress">
+        <li data-stage="handshake">正在进行握手</li>
+        <li data-stage="wifi">发送 Wi‑Fi 设置</li>
+        <li data-stage="register">等待注册响应</li>
+      </ol>
+      <button id="cancel" class="secondary" type="button">断开并清除输入</button>
+    </section>
+
+    <section id="result" class="panel result" hidden>
+      <div id="result-icon" class="result-icon pending" aria-hidden="true">…</div>
+      <h2 id="result-title">已收到设备蓝牙响应</h2>
+      <p id="device-id"></p>
+      <p id="registration-check" class="small registration-check" role="status" aria-live="polite">正在核对本地是否收到并保存注册密钥…</p>
+      <p class="small muted">只有这里显示“本地密钥已登记”，且上方风机已连接，才表示本地注册完成。此结果不代表原生 AI 联动已经恢复。</p>
+      <button id="finish" class="secondary" type="button">清除页面中的 Wi‑Fi 信息</button>
+    </section>
+
+    <section id="failure" class="panel warning" role="alert" hidden>
+      <h2>配对未完成</h2>
+      <p id="failure-message"></p>
+      <button id="retry" type="button">返回重试</button>
+    </section>
+
+    <footer class="footer">本地页面 · 不使用 CDN · 协议参考及许可见 <a href="./UPSTREAM-NOTE.md">UPSTREAM-NOTE.md</a></footer>
+  </main>
+</body>
+</html>
