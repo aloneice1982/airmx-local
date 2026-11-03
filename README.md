@@ -18,8 +18,8 @@
 ## 安装 Skill
 
 ```sh
-git clone https://github.com/aloneice1982/airmx-local-recovery-skill.git
-cd airmx-local-recovery-skill
+git clone https://github.com/aloneice1982/airmx-local.git
+cd airmx-local
 mkdir -p ~/.codex/skills
 cp -R skills/airmx-local-recovery ~/.codex/skills/
 ```
