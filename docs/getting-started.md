@@ -1,4 +1,6 @@
-# 搭建：从同一内网到设备与 HA
+# 从零搭建
+
+先阅读[架构与适用范围](architecture.md)，确认设备协议和部署拓扑适合本项目。
 
 ## 准备与边界
 
@@ -19,9 +21,9 @@ tcpdump -ni br-lan 'host FAN_IP or host SENSOR_IP'
 仓库根目录：
 
 ```sh
-cp skills/airmx-local-recovery/assets/config.example.json config.local.json
+cp config/config.example.json config.local.json
 # 用编辑器填写自己的全部观测值。
-python3 skills/airmx-local-recovery/scripts/render_project.py \
+python3 scripts/render_project.py \
   --config config.local.json --output deploy
 ```
 
@@ -136,4 +138,4 @@ ls -l /etc/rc.d/*airmx*
 
 ## 下一步
 
-按 [HA 与 AI](ha-and-ai.md) 安装现有 HA，先只读/观察，再现场验收一次控制。API token 通过受限文件传输并放 secrets.yaml；不要贴到对话或公开 issue。原生 AI 要确认真实检测仪数据已转发给风机，不能仅以 HA 有读数推断。
+按 [HA 与 AI](home-assistant.md) 安装现有 HA，先只读/观察，再现场验收一次控制。API token 通过受限文件传输并放 secrets.yaml；不要贴到对话或公开 issue。原生 AI 要确认真实检测仪数据已转发给风机，不能仅以 HA 有读数推断。

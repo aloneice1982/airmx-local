@@ -9,7 +9,7 @@ import re
 import shutil
 import tempfile
 
-SKILL = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def validate(raw):
@@ -65,14 +65,14 @@ def render(config, destination):
         p.write_text(text)
         p.chmod(0o600)
     try:
-        server=replace((SKILL/'scripts/recovery_server.py').read_text())
+        server=replace((ROOT/'src/recovery_server.py').read_text())
         for key,value in {'FAN_MAC':cfg['fan_mac'],'DEVICE_ID':cfg['device_id']}.items():
             server,count=re.subn(r'^'+key+r' = .*$',key+' = '+repr(value),server,flags=re.M)
             if count!=1:raise ValueError('unexpected server identity template')
         compile(server,'recovery_server.py','exec')
         write(Path('router/recovery_server.py'),server)
         for name in ('airmx-recovery.init','airmx-redirect.init','apply-rules.sh'):
-            write(Path('router')/name,replace((SKILL/'assets'/name).read_text()))
+            write(Path('router')/name,replace((ROOT/'templates/openwrt'/name).read_text()))
         nft = ('table ip airmx_recovery {\n    chain prerouting {\n'
                '        type nat hook prerouting priority '+str(cfg['nat_priority'])+'; policy accept;\n')
         sources=', '.join((cfg['fan_ip'],cfg['sensor_ip']))
@@ -82,12 +82,12 @@ def render(config, destination):
                     +str(cloud_port)+' counter redirect to :'+str(local_port)+'\n')
         nft += '    }\n}\n'
         write(Path('router/recovery-rules.nft'),nft)
-        write(Path('ha/controller.py'),replace((SKILL/'scripts/controller.py').read_text()))
-        write(Path('ha/airmx.yaml'),replace((SKILL/'assets/ha-package.yaml').read_text()))
-        gateway=replace((SKILL/'scripts/pairing_gateway.py').read_text())
+        write(Path('ha/controller.py'),replace((ROOT/'src/controller.py').read_text()))
+        write(Path('ha/airmx.yaml'),replace((ROOT/'templates/home-assistant/airmx.yaml').read_text()))
+        gateway=replace((ROOT/'src/pairing_gateway.py').read_text())
         gateway=gateway.replace('root@'+cfg['service_ip'],cfg['router_ssh'])
         write(Path('desktop/pairing_gateway.py'),gateway)
-        shutil.copytree(SKILL/'assets/pairing',temp/'desktop/pairing',ignore=shutil.ignore_patterns('*.test.mjs'))
+        shutil.copytree(ROOT/'web/pairing',temp/'desktop/pairing',ignore=shutil.ignore_patterns('*.test.mjs'))
         write(Path('config.local.json'),json.dumps(cfg,indent=2)+'\n')
         temp.replace(dest)
     except BaseException:

@@ -2,7 +2,7 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-path = Path(__file__).resolve().parents[1] / 'skills/airmx-local-recovery/scripts/controller.py'
+path = Path(__file__).resolve().parents[1] / 'src/controller.py'
 spec = importlib.util.spec_from_file_location('smart_controller', path)
 smart = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(smart)

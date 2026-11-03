@@ -5,14 +5,14 @@ import tempfile
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-spec=importlib.util.spec_from_file_location('renderer',ROOT/'skills/airmx-local-recovery/scripts/render_project.py')
+spec=importlib.util.spec_from_file_location('renderer',ROOT/'scripts/render_project.py')
 renderer=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(renderer)
 
 
 class RenderTests(unittest.TestCase):
     def config(self):
-        cfg=json.loads((ROOT/'skills/airmx-local-recovery/assets/config.example.json').read_text())
+        cfg=json.loads((ROOT/'config/config.example.json').read_text())
         cfg.update(service_ip='10.42.0.1',fan_ip='10.42.0.20',sensor_ip='10.42.0.21',
                    ha_ip='10.42.0.30',fan_mac='02:11:22:33:44:55',device_id=23456,
                    cloud_ips=['203.0.113.20','203.0.113.21'],http_port=25980,
